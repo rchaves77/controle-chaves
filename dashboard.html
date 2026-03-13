@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa de Chaves - Estácio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+<body class="bg-slate-50">
+    <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h2 class="font-bold tracking-tighter">CLÍNICA ODONTO ESTÁCIO</h2>
+            <div class="flex gap-2">
+                <button onclick="enviarMassa()" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-[10px] font-bold uppercase shadow">Cobrança Semestre</button>
+                <button onclick="auth.signOut().then(()=>window.location.href='index.html')" class="bg-red-500 px-3 py-1 rounded text-[10px] font-bold">SAIR</button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="grades" class="max-w-6xl mx-auto p-4 md:p-8 grid gap-10">
+        </div>
+
+    <script src="config.js"></script>
+    <script>
+        // Bloqueio de segurança: se não logar, expulsa para o index
+        auth.onAuthStateChanged(user => { if(!user) window.location.href="index.html"; });
+
+        const blocos = ['C1', 'C2', 'C3'];
+        
+        // Escuta o banco de dados em tempo real
+        db.ref('armarios').on('value', snap => {
+            const dados = snap.val() || {};
+            const container = document.getElementById('grades');
+            container.innerHTML = '';
+
+            blocos.forEach(bloco => {
+                let html = `<div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                    <h3 class="text-xl font-black text-blue-900 mb-6 border-b pb-2 text-center">BLOCO ${bloco}</h3>
+                    <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">`;
+                
+                for(let i=1; i<=24; i++) {
+                    const id = `${bloco}-${i}`;
+                    const ocupado = dados[id];
+                    const cor = ocupado ? 'bg-red-500 shadow-inner' : 'bg-green-500 shadow';
+                    html += `<div onclick="gerenciar('${id}', ${JSON.stringify(ocupado)})" 
+                             class="${cor} p-3 text-white rounded-lg text-sm font-black cursor-pointer hover:scale-105 transition-all text-center">
+                             ${i}
+                             </div>`;
+                }
+                container.innerHTML += html + `</div></div>`;
+            });
+        });
+
+        function gerenciar(id, ocupado) {
+            if(ocupado) {
+                if(confirm(`Armário ${id}\nAluno: ${ocupado.nome}\nLiberar esta chave?`)) {
+                    db.ref('armarios/'+id).remove();
+                }
+            } else {
+                const nome = prompt(`Retirada Chave ${id}\nNome do Aluno:`);
+                const whats = prompt(`WhatsApp do Aluno (com DDD, apenas números):`);
+                if(nome && whats) {
+                    db.ref('armarios/'+id).set({
+                        nome: nome,
+                        whats: whats,
+                        data: new Date().toLocaleDateString('pt-BR')
+                    });
+                }
+            }
+        }
+
+        function enviarMassa() {
+            db.ref('armarios').once('value', snap => {
+                const pendentes = snap.val();
+                if(!pendentes) return alert("Nenhuma chave ocupada.");
+                
+                if(confirm("Deseja abrir o WhatsApp para cobrar todos os pendentes?")) {
+                    Object.entries(pendentes).forEach(([id, info]) => {
+                        const msg = `Olá ${info.nome}, aqui é da Clínica Estácio. Favor devolver a chave ${id} para fechamento do semestre.`;
+                        window.open(`https://wa.me/55${info.whats}?text=${encodeURIComponent(msg)}`, '_blank');
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Clínica Estácio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-700">
+        <h1 class="text-3xl font-extrabold text-blue-900 text-center mb-2">ESTÁCIO</h1>
+        <p class="text-gray-500 text-center mb-8 font-medium">Controle de Chaves Odonto</p>
+        
+        <div class="space-y-4">
+            <input type="email" id="email" placeholder="nome@alunos.estacio.br" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="password" id="pass" placeholder="Sua senha" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+            
+            <button onclick="logar()" class="w-full bg-blue-700 text-white p-3 rounded-xl font-bold hover:bg-blue-800 transition">ENTRAR</button>
+            
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-gray-300"></div>
+                <span class="flex-shrink mx-4 text-gray-400 text-xs uppercase">Ainda não tem conta?</span>
+                <div class="flex-grow border-t border-gray-300"></div>
+            </div>
+
+            <button onclick="cadastrar()" class="w-full border-2 border-blue-700 text-blue-700 p-3 rounded-xl font-bold hover:bg-blue-50 transition">CRIAR CONTA (ESTÁCIO)</button>
+        </div>
+        <p id="msg" class="mt-4 text-center text-sm font-bold"></p>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        function logar() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => window.location.href = "dashboard.html")
+                .catch(() => mostrarErro("E-mail ou senha incorretos."));
+        }
+
+        function cadastrar() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            if (!email.includes('estacio.br')) return mostrarErro("Use seu e-mail institucional!");
+            if (pass.length < 6) return mostrarErro("Senha deve ter no mínimo 6 dígitos.");
+
+            auth.createUserWithEmailAndPassword(email, pass)
+                .then(() => alert("Conta criada com sucesso! Faça login."))
+                .catch(e => mostrarErro("Erro: " + e.message));
+        }
+
+        function mostrarErro(txt) {
+            const msg = document.getElementById('msg');
+            msg.innerText = txt;
+            msg.className = "mt-4 text-center text-sm font-bold text-red-600";
+        }
+    </script>
+</body>
+</html>
