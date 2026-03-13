@@ -10,13 +10,35 @@
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans">
 
+    <div id="modalReserva" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden border-t-8 border-blue-900">
+            <div class="p-6">
+                <h2 id="tituloReserva" class="text-lg font-black text-blue-900 mb-4 uppercase italic">Reservar Armário</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">Nome do Aluno</label>
+                        <input type="text" id="nomeReserva" class="w-full p-3 border rounded-xl outline-none bg-slate-50 uppercase font-bold text-sm">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">WhatsApp</label>
+                        <input type="text" id="whatsReserva" placeholder="(00) 0 0000-0000" maxlength="16" class="w-full p-3 border rounded-xl outline-none bg-slate-50 font-bold text-sm">
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="fecharModal()" class="flex-1 bg-gray-200 text-gray-600 p-3 rounded-xl font-bold text-xs uppercase">Cancelar</button>
+                        <button onclick="confirmarReserva()" class="flex-1 bg-blue-700 text-white p-3 rounded-xl font-bold text-xs uppercase shadow-lg">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="modalCobranca" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
-            <div class="bg-blue-900 p-4 flex justify-between items-center text-white text-sm font-bold uppercase italic">
-                <span>Fila de Cobrança Semestral</span>
+            <div class="bg-blue-900 p-4 flex justify-between items-center text-white text-xs font-bold uppercase italic">
+                <span>Fila de Cobrança</span>
                 <button onclick="document.getElementById('modalCobranca').classList.add('hidden')" class="text-xl">&times;</button>
             </div>
-            <div id="listaDevedores" class="max-h-96 overflow-y-auto p-4 space-y-3 bg-slate-50 text-gray-700"></div>
+            <div id="listaDevedores" class="max-h-96 overflow-y-auto p-4 space-y-3 bg-slate-50"></div>
         </div>
     </div>
 
@@ -24,15 +46,15 @@
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <h2 class="font-bold text-sm uppercase italic tracking-tighter">Clínica Odonto Estácio</h2>
             <div class="flex gap-2">
-                <button id="btnAdmin" onclick="abrirModalCobranca()" class="hidden bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-[10px] font-bold uppercase shadow transition-all italic">Cobrança Semestre</button>
-                <button onclick="auth.signOut().then(()=>window.location.href='index.html')" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-[10px] font-bold uppercase shadow transition-all">Sair</button>
+                <button id="btnAdmin" onclick="abrirModalCobranca()" class="hidden bg-green-500 px-3 py-1 rounded text-[10px] font-bold uppercase shadow italic">Cobrança</button>
+                <button onclick="auth.signOut().then(()=>window.location.href='index.html')" class="bg-red-500 px-3 py-1 rounded text-[10px] font-bold uppercase shadow">Sair</button>
             </div>
         </div>
     </nav>
 
     <div class="max-w-6xl mx-auto px-4 md:px-8 mt-6 w-full text-blue-900 font-medium text-sm">
         <div class="border-l-4 border-blue-700 pl-3">
-            <p id="boasVindas" class="italic">Verificando usuário...</p>
+            <p id="boasVindas" class="italic">Carregando...</p>
         </div>
     </div>
 
@@ -43,28 +65,28 @@
     <script src="config.js"></script>
     <script>
         let eAdmin = false;
+        let armarioSelecionado = null;
+        let usuarioLogado = null;
+
+        // Máscara de WhatsApp automática
+        document.getElementById('whatsReserva').addEventListener('input', e => {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,1})(\d{0,4})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? ' ' + x[3] : '') + (x[4] ? '-' + x[4] : '');
+        });
 
         auth.onAuthStateChanged(user => { 
-            if(!user) {
-                window.location.href="index.html";
-            } else {
-                const email = user.email.toLowerCase();
-                const saudacao = document.getElementById('boasVindas');
-
-                // BUSCA O NOME REAL SALVO NO CADASTRO
+            if(!user) window.location.href="index.html";
+            else {
+                usuarioLogado = user;
                 db.ref('usuarios_termos/' + user.uid).once('value', snap => {
-                    let nomeFinal = "";
-                    if (snap.exists() && snap.val().nome) {
-                        nomeFinal = snap.val().nome.toUpperCase();
-                    } else {
-                        // Caso seja um usuário antigo sem nome, usa o CPF (antes do @)
-                        nomeFinal = email.split('@')[0].toUpperCase();
-                    }
-                    saudacao.innerHTML = `Olá, <b>${nomeFinal}</b>. Bem-vindo ao sistema de chaves.`;
+                    const dados = snap.val() || {};
+                    const nome = dados.nome || user.email.split('@')[0];
+                    document.getElementById('boasVindas').innerHTML = `Olá, <b>${nome.toUpperCase()}</b>. Selecione um armário livre.`;
+                    // Preenche o nome no modal automaticamente se já tiver no cadastro
+                    if(dados.nome) document.getElementById('nomeReserva').value = dados.nome;
                 });
 
-                // TRAVA DE SEGURANÇA (Bloqueia edição para @alunos e @professores)
-                if (!email.endsWith('@alunos.estacio.br') && !email.endsWith('@professores.estacio.br')) {
+                if (!user.email.endsWith('@alunos.estacio.br') && !user.email.endsWith('@professores.estacio.br')) {
                     eAdmin = true;
                     document.getElementById('btnAdmin').classList.remove('hidden');
                 }
@@ -78,52 +100,71 @@
                 const container = document.getElementById('grades');
                 container.innerHTML = '';
                 ['C1', 'C2', 'C3'].forEach(bloco => {
-                    let html = `<div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 shadow-md">
+                    let html = `<div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
                         <h3 class="text-lg font-black text-blue-900 mb-6 border-b pb-2 text-center uppercase italic">Bloco ${bloco}</h3>
                         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">`;
                     for(let i=1; i<=24; i++) {
                         const id = `${bloco}-${i}`;
                         const ocupado = dados[id];
-                        const cor = ocupado ? 'bg-red-500 ring-2 ring-red-100 shadow-inner' : 'bg-green-500 hover:bg-green-600';
-                        
-                        const cursor = eAdmin ? 'cursor-pointer hover:scale-105' : 'cursor-default opacity-90';
-                        const clickFunc = eAdmin ? `onclick="gerenciar('${id}', ${JSON.stringify(ocupado)})"` : '';
-
-                        html += `<div ${clickFunc} class="${cor} ${cursor} p-3 text-white rounded-lg text-sm font-black transition-all text-center shadow-sm">${i}</div>`;
+                        const cor = ocupado ? 'bg-red-500 shadow-inner opacity-90' : 'bg-green-500 hover:scale-110 cursor-pointer';
+                        html += `<div onclick="acaoArmario('${id}', ${JSON.stringify(ocupado)})" class="${cor} p-3 text-white rounded-lg text-sm font-black transition-all text-center shadow-sm">${i}</div>`;
                     }
                     container.innerHTML += html + `</div></div>`;
                 });
             });
         }
 
-        function gerenciar(id, ocupado) {
-            if(!eAdmin) return;
-            if(ocupado) {
-                if(confirm(`Devolver chave ${id} de ${ocupado.nome}?`)) db.ref('armarios/'+id).remove();
-            } else {
-                const n = prompt(`Retirada Chave ${id}\nNome do Aluno:`);
-                let w = prompt(`WhatsApp do Aluno (com DDD):`);
-                if(n && w) {
-                    w = w.replace(/\D/g, '');
-                    if (w.length <= 11) w = '55' + w;
-                    db.ref('armarios/'+id).set({ nome: n, whats: w, data: new Date().toLocaleDateString('pt-BR') });
+        function acaoArmario(id, ocupado) {
+            if (ocupado) {
+                if (eAdmin) {
+                    if (confirm(`ADMIN: Devolver chave ${id} de ${ocupado.nome}?`)) db.ref('armarios/'+id).remove();
+                } else {
+                    alert(`Armário ${id} já está ocupado por ${ocupado.nome}.`);
                 }
+            } else {
+                // Aluno ou Admin clicando em armário livre
+                armarioSelecionado = id;
+                document.getElementById('tituloReserva').innerText = `Reservar #${id}`;
+                document.getElementById('modalReserva').classList.remove('hidden');
             }
         }
 
+        function fecharModal() {
+            document.getElementById('modalReserva').classList.add('hidden');
+            armarioSelecionado = null;
+        }
+
+        function confirmarReserva() {
+            const nome = document.getElementById('nomeReserva').value;
+            let whats = document.getElementById('whatsReserva').value;
+            
+            if(!nome || whats.length < 14) return alert("Preencha nome e WhatsApp corretamente.");
+
+            const whatsLimpo = '55' + whats.replace(/\D/g, '');
+            
+            db.ref('armarios/' + armarioSelecionado).set({
+                nome: nome.toUpperCase(),
+                whats: whatsLimpo,
+                data: new Date().toLocaleDateString('pt-BR'),
+                uid: usuarioLogado.uid
+            }).then(() => {
+                fecharModal();
+                alert("Armário reservado com sucesso!");
+            });
+        }
+
         function abrirModalCobranca() {
-            if(!eAdmin) return;
             db.ref('armarios').once('value', snap => {
                 const pendentes = snap.val();
-                if(!pendentes) return alert("Nenhuma chave ocupada.");
+                if(!pendentes) return alert("Vazio.");
                 const lista = document.getElementById('listaDevedores');
                 lista.innerHTML = '';
                 Object.entries(pendentes).forEach(([id, info]) => {
                     const div = document.createElement('div');
                     div.className = "flex justify-between items-center p-3 bg-white border rounded-xl mb-2 shadow-sm";
                     div.innerHTML = `<div class="text-[10px] font-bold text-blue-900 uppercase">#${id} - ${info.nome}</div>
-                        <button onclick="window.open('https://api.whatsapp.com/send?phone=${info.whats}&text=Ola ${info.nome}, clínica Estácio. Favor devolver a chave ${id}.', '_blank'); this.innerText='OK ✓'; this.className='bg-gray-200 px-3 py-1 rounded text-[8px] font-bold text-gray-400';" 
-                        class="bg-green-500 text-white px-3 py-1 rounded-full text-[8px] font-bold shadow-sm hover:bg-green-600 transition-colors uppercase italic">Cobrar</button>`;
+                        <button onclick="window.open('https://api.whatsapp.com/send?phone=${info.whats}&text=Ola ${info.nome}, clínica Estácio. Favor devolver a chave ${id}.', '_blank')" 
+                        class="bg-green-500 text-white px-3 py-1 rounded-full text-[8px] font-bold uppercase">Cobrar</button>`;
                     lista.appendChild(div);
                 });
                 document.getElementById('modalCobranca').classList.remove('hidden');
