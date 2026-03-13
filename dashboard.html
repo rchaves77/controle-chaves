@@ -11,8 +11,9 @@
 <body class="bg-slate-50">
     <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <h2 class="font-bold tracking-tighter">CLÍNICA ODONTO ESTÁCIO</h2>
+            <h2 class="font-bold tracking-tighter uppercase text-sm md:text-base">Clínica Odonto Estácio</h2>
             <div class="flex gap-2">
+                <button onclick="baixarRelatorioTermos()" class="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-[10px] font-bold uppercase shadow">Relatório Termos</button>
                 <button onclick="enviarMassa()" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-[10px] font-bold uppercase shadow">Cobrança Semestre</button>
                 <button onclick="auth.signOut().then(()=>window.location.href='index.html')" class="bg-red-500 px-3 py-1 rounded text-[10px] font-bold">SAIR</button>
             </div>
@@ -37,13 +38,13 @@
 
             blocos.forEach(bloco => {
                 let html = `<div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <h3 class="text-xl font-black text-blue-900 mb-6 border-b pb-2 text-center">BLOCO ${bloco}</h3>
+                    <h3 class="text-xl font-black text-blue-900 mb-6 border-b pb-2 text-center uppercase tracking-widest">Bloco ${bloco}</h3>
                     <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">`;
                 
                 for(let i=1; i<=24; i++) {
                     const id = `${bloco}-${i}`;
                     const ocupado = dados[id];
-                    const cor = ocupado ? 'bg-red-500 shadow-inner' : 'bg-green-500 shadow';
+                    const cor = ocupado ? 'bg-red-500 shadow-inner ring-2 ring-red-200' : 'bg-green-500 shadow hover:bg-green-600';
                     html += `<div onclick="gerenciar('${id}', ${JSON.stringify(ocupado)})" 
                              class="${cor} p-3 text-white rounded-lg text-sm font-black cursor-pointer hover:scale-105 transition-all text-center">
                              ${i}
@@ -55,16 +56,25 @@
 
         function gerenciar(id, ocupado) {
             if(ocupado) {
-                if(confirm(`Armário ${id}\nAluno: ${ocupado.nome}\nLiberar esta chave?`)) {
+                if(confirm(`Armário ${id}\nAluno: ${ocupado.nome}\nData: ${ocupado.data}\n\nLiberar esta chave agora?`)) {
                     db.ref('armarios/'+id).remove();
                 }
             } else {
                 const nome = prompt(`Retirada Chave ${id}\nNome do Aluno:`);
-                const whats = prompt(`WhatsApp do Aluno (com DDD, apenas números):`);
-                if(nome && whats) {
+                let whatsRaw = prompt(`WhatsApp do Aluno (com DDD, ex: 68999998888):`);
+                
+                if(nome && whatsRaw) {
+                    // LIMPEZA: Remove +, espaços, traços e parênteses
+                    let whatsLimpo = whatsRaw.replace(/\D/g, ''); 
+                    
+                    // Garante o prefixo 55 do Brasil se o aluno não digitar
+                    if (whatsLimpo.length <= 11) {
+                        whatsLimpo = '55' + whatsLimpo;
+                    }
+
                     db.ref('armarios/'+id).set({
                         nome: nome,
-                        whats: whats,
+                        whats: whatsLimpo,
                         data: new Date().toLocaleDateString('pt-BR')
                     });
                 }
@@ -78,10 +88,34 @@
                 
                 if(confirm("Deseja abrir o WhatsApp para cobrar todos os pendentes?")) {
                     Object.entries(pendentes).forEach(([id, info]) => {
-                        const msg = `Olá ${info.nome}, aqui é da Clínica Estácio. Favor devolver a chave ${id} para fechamento do semestre.`;
-                        window.open(`https://wa.me/55${info.whats}?text=${encodeURIComponent(msg)}`, '_blank');
+                        const msg = `Olá ${info.nome}, aqui é da Clínica Estácio. Favor devolver a chave ${id} para fechamento do semestre letivo.`;
+                        // Link direto e limpo para evitar erros 404
+                        window.open(`https://api.whatsapp.com/send?phone=${info.whats}&text=${encodeURIComponent(msg)}`, '_blank');
                     });
                 }
+            });
+        }
+
+        function baixarRelatorioTermos() {
+            db.ref('usuarios_termos').once('value', snap => {
+                const dados = snap.val();
+                if (!dados) return alert("Nenhum termo assinado no banco de dados.");
+
+                let csv = "\uFEFFEmail;Data e Hora;Status\n"; // \uFEFF garante acentos no Excel
+
+                Object.values(dados).forEach(user => {
+                    csv += `${user.email};${user.dataHora};${user.status}\n`;
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "relatorio_termos_estacio.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             });
         }
     </script>
