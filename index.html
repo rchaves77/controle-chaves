@@ -8,41 +8,37 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
-<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-700">
         <h1 class="text-3xl font-extrabold text-blue-900 text-center mb-2">ESTÁCIO</h1>
-        <p class="text-gray-500 text-center mb-6 font-medium">Controle de Chaves Odonto</p>
+        <p class="text-gray-500 text-center mb-6 font-medium uppercase text-xs tracking-widest">Controle de Chaves Odonto</p>
         
         <div class="space-y-4">
-            <input type="email" id="email" placeholder="nome@alunos.estacio.br" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-            <input type="password" id="pass" placeholder="Sua senha" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="email" id="email" placeholder="nome@alunos.estacio.br" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+            <input type="password" id="pass" placeholder="Sua senha" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
             
             <div class="bg-slate-50 p-3 rounded-lg border border-gray-200">
-                <h3 class="text-[10px] font-bold text-gray-700 uppercase mb-1">Termo de Responsabilidade:</h3>
-                <div class="h-24 overflow-y-auto text-[11px] text-gray-600 mb-2 p-2 bg-white border rounded">
-                    1. Os armários são rotativos e de uso temporário.<br>
-                    2. A <b>Estácio Unimeta NÃO se responsabiliza</b> por sumiço, furto ou danos a materiais guardados nos armários.<br>
-                    3. O aluno é o único responsável pela guarda da chave e do cadeado.<br>
-                    4. A chave deve ser <b>devolvida imediatamente</b> após o último uso do semestre letivo.
+                <h3 class="text-[10px] font-bold text-gray-700 uppercase mb-1 tracking-tighter">Termo de Responsabilidade:</h3>
+                <div class="h-20 overflow-y-auto text-[10px] text-gray-500 mb-2 p-2 bg-white border rounded leading-tight">
+                    1. Os armários são rotativos e de uso temporário durante as atividades acadêmicas.<br>
+                    2. A <b>Estácio Unimeta NÃO se responsabiliza</b> por sumiço, furto ou danos a materiais guardados.<br>
+                    3. A devolução da chave deve ser <b>imediata</b> após o último uso do semestre letivo.
                 </div>
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="aceiteTermo" class="w-4 h-4 text-blue-600">
+                    <input type="checkbox" id="aceiteTermo" class="w-4 h-4 text-blue-600 rounded">
                     <span class="text-[11px] font-semibold text-gray-700">Li e aceito os termos acima.</span>
                 </label>
             </div>
 
             <button onclick="logar()" class="w-full bg-blue-700 text-white p-3 rounded-xl font-bold hover:bg-blue-800 transition shadow-md">ENTRAR</button>
-            
-            <div class="relative flex py-2 items-center">
-                <div class="flex-grow border-t border-gray-300"></div>
-                <span class="flex-shrink mx-4 text-gray-400 text-xs uppercase italic">Novo usuário?</span>
-                <div class="flex-grow border-t border-gray-300"></div>
-            </div>
-
-            <button onclick="cadastrar()" class="w-full border-2 border-blue-700 text-blue-700 p-3 rounded-xl font-bold hover:bg-blue-50 transition">CRIAR CONTA E ASSINAR TERMO</button>
+            <button onclick="cadastrar()" class="w-full border-2 border-blue-700 text-blue-700 p-3 rounded-xl font-bold hover:bg-blue-50 transition">CRIAR CONTA</button>
         </div>
-        <p id="msg" class="mt-4 text-center text-sm font-bold"></p>
+        <p id="msg" class="mt-4 text-center text-xs font-bold"></p>
     </div>
+
+    <footer class="mt-8 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+        Desenvolvido por SerClin Tech
+    </footer>
 
     <script src="config.js"></script>
     <script>
@@ -59,22 +55,19 @@
             const pass = document.getElementById('pass').value;
             const aceitou = document.getElementById('aceiteTermo').checked;
 
-            if (!aceitou) return mostrarErro("Você precisa aceitar o termo de responsabilidade!");
-            if (!email.endsWith('@alunos.estacio.br') && !email.endsWith('@professores.estacio.br')) {
-                return mostrarErro("Use seu e-mail institucional!");
-            }
-            if (pass.length < 6) return mostrarErro("A senha deve ter pelo menos 6 dígitos.");
+            if (!aceitou) return mostrarErro("Aceite os termos para continuar.");
+            if (!email.includes('estacio.br')) return mostrarErro("Use e-mail @estacio.br");
+            if (pass.length < 6) return mostrarErro("Senha mínima: 6 caracteres.");
 
             auth.createUserWithEmailAndPassword(email, pass)
                 .then((userCredential) => {
-                    // REGISTRA O ACEITE DO TERMO NO BANCO DE DADOS
                     db.ref('usuarios_termos/' + userCredential.user.uid).set({
                         email: email,
                         aceite: true,
                         dataHora: new Date().toLocaleString('pt-BR'),
-                        status: "Termo Assinado Digitalmente"
+                        status: "Termo Assinado"
                     });
-                    alert("Conta criada e Termo Assinado! Agora clique em ENTRAR.");
+                    alert("Conta criada! Clique em entrar.");
                 })
                 .catch(e => mostrarErro("Erro: " + e.message));
         }
@@ -82,7 +75,7 @@
         function mostrarErro(txt) {
             const msg = document.getElementById('msg');
             msg.innerText = txt;
-            msg.className = "mt-4 text-center text-sm font-bold text-red-600 bg-red-50 p-2 rounded border border-red-200";
+            msg.className = "mt-4 text-center text-xs font-bold text-red-600 bg-red-50 p-2 rounded border border-red-100";
         }
     </script>
 </body>
