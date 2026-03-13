@@ -16,7 +16,7 @@
                 <span>Fila de Cobrança Semestral</span>
                 <button onclick="document.getElementById('modalCobranca').classList.add('hidden')" class="text-xl">&times;</button>
             </div>
-            <div id="listaDevedores" class="max-h-96 overflow-y-auto p-4 space-y-3 bg-slate-50"></div>
+            <div id="listaDevedores" class="max-h-96 overflow-y-auto p-4 space-y-3 bg-slate-50 text-gray-700"></div>
         </div>
     </div>
 
@@ -30,9 +30,9 @@
         </div>
     </nav>
 
-    <div class="max-w-6xl mx-auto px-4 md:px-8 mt-6 w-full text-blue-900">
+    <div class="max-w-6xl mx-auto px-4 md:px-8 mt-6 w-full text-blue-900 font-medium text-sm">
         <div class="border-l-4 border-blue-700 pl-3">
-            <p id="boasVindas" class="font-medium text-sm italic">Verificando usuário...</p>
+            <p id="boasVindas" class="italic">Verificando usuário...</p>
         </div>
     </div>
 
@@ -51,19 +51,19 @@
                 const email = user.email.toLowerCase();
                 const saudacao = document.getElementById('boasVindas');
 
-                // 1. Busca o NOME REAL no banco de dados de usuários
+                // BUSCA O NOME REAL SALVO NO CADASTRO
                 db.ref('usuarios_termos/' + user.uid).once('value', snap => {
-                    let nomeParaExibir = "";
+                    let nomeFinal = "";
                     if (snap.exists() && snap.val().nome) {
-                        nomeParaExibir = snap.val().nome.toUpperCase();
+                        nomeFinal = snap.val().nome.toUpperCase();
                     } else {
-                        // Se não tiver nome, usa a parte antes do @ do e-mail (CPF)
-                        nomeParaExibir = email.split('@')[0].toUpperCase();
+                        // Caso seja um usuário antigo sem nome, usa o CPF (antes do @)
+                        nomeFinal = email.split('@')[0].toUpperCase();
                     }
-                    saudacao.innerHTML = `Olá, <b>${nomeParaExibir}</b>. Bem-vindo ao sistema de chaves.`;
+                    saudacao.innerHTML = `Olá, <b>${nomeFinal}</b>. Bem-vindo ao sistema de chaves.`;
                 });
 
-                // 2. Trava de segurança para Alunos e Professores
+                // TRAVA DE SEGURANÇA (Bloqueia edição para @alunos e @professores)
                 if (!email.endsWith('@alunos.estacio.br') && !email.endsWith('@professores.estacio.br')) {
                     eAdmin = true;
                     document.getElementById('btnAdmin').classList.remove('hidden');
@@ -78,15 +78,17 @@
                 const container = document.getElementById('grades');
                 container.innerHTML = '';
                 ['C1', 'C2', 'C3'].forEach(bloco => {
-                    let html = `<div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <h3 class="text-lg font-black text-blue-900 mb-6 border-b pb-2 text-center uppercase italic font-serif">Bloco ${bloco}</h3>
+                    let html = `<div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 shadow-md">
+                        <h3 class="text-lg font-black text-blue-900 mb-6 border-b pb-2 text-center uppercase italic">Bloco ${bloco}</h3>
                         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">`;
                     for(let i=1; i<=24; i++) {
                         const id = `${bloco}-${i}`;
                         const ocupado = dados[id];
                         const cor = ocupado ? 'bg-red-500 ring-2 ring-red-100 shadow-inner' : 'bg-green-500 hover:bg-green-600';
+                        
                         const cursor = eAdmin ? 'cursor-pointer hover:scale-105' : 'cursor-default opacity-90';
                         const clickFunc = eAdmin ? `onclick="gerenciar('${id}', ${JSON.stringify(ocupado)})"` : '';
+
                         html += `<div ${clickFunc} class="${cor} ${cursor} p-3 text-white rounded-lg text-sm font-black transition-all text-center shadow-sm">${i}</div>`;
                     }
                     container.innerHTML += html + `</div></div>`;
@@ -99,8 +101,8 @@
             if(ocupado) {
                 if(confirm(`Devolver chave ${id} de ${ocupado.nome}?`)) db.ref('armarios/'+id).remove();
             } else {
-                const n = prompt("Nome completo do Aluno:");
-                let w = prompt("WhatsApp (com DDD):");
+                const n = prompt(`Retirada Chave ${id}\nNome do Aluno:`);
+                let w = prompt(`WhatsApp do Aluno (com DDD):`);
                 if(n && w) {
                     w = w.replace(/\D/g, '');
                     if (w.length <= 11) w = '55' + w;
@@ -121,7 +123,7 @@
                     div.className = "flex justify-between items-center p-3 bg-white border rounded-xl mb-2 shadow-sm";
                     div.innerHTML = `<div class="text-[10px] font-bold text-blue-900 uppercase">#${id} - ${info.nome}</div>
                         <button onclick="window.open('https://api.whatsapp.com/send?phone=${info.whats}&text=Ola ${info.nome}, clínica Estácio. Favor devolver a chave ${id}.', '_blank'); this.innerText='OK ✓'; this.className='bg-gray-200 px-3 py-1 rounded text-[8px] font-bold text-gray-400';" 
-                        class="bg-green-500 text-white px-3 py-1 rounded-full text-[8px] font-bold shadow-sm hover:bg-green-600 transition-colors uppercase">Cobrar</button>`;
+                        class="bg-green-500 text-white px-3 py-1 rounded-full text-[8px] font-bold shadow-sm hover:bg-green-600 transition-colors uppercase italic">Cobrar</button>`;
                     lista.appendChild(div);
                 });
                 document.getElementById('modalCobranca').classList.remove('hidden');
