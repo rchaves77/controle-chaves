@@ -1,4 +1,3 @@
-// Configuração extraída do seu console Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCYFKI7w7Lhe4ljvrO13s7e8cERMsBVr2Q",
     authDomain: "chaves-estacio.firebaseapp.com",
@@ -10,7 +9,6 @@ const firebaseConfig = {
     measurementId: "G-CESXMKVRE0"
 };
 
-// Inicialização compatível com Scripts diretos (compat)
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();

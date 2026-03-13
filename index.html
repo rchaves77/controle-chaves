@@ -8,37 +8,34 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
-<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-700">
-        <h1 class="text-3xl font-extrabold text-blue-900 text-center mb-2">ESTÁCIO</h1>
-        <p class="text-gray-500 text-center mb-6 font-medium uppercase text-xs tracking-widest">Controle de Chaves Odonto</p>
+        <h1 class="text-3xl font-extrabold text-blue-900 text-center mb-2 uppercase">Estácio</h1>
+        <p class="text-gray-500 text-center mb-6 font-medium text-xs tracking-widest uppercase">Controle de Chaves Odonto</p>
         
         <div class="space-y-4">
-            <input type="email" id="email" placeholder="nome@alunos.estacio.br" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
-            <input type="password" id="pass" placeholder="Sua senha" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+            <input type="email" id="email" placeholder="nome@alunos.estacio.br" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="pass" placeholder="Sua senha" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
             
             <div class="bg-slate-50 p-3 rounded-lg border border-gray-200">
-                <h3 class="text-[10px] font-bold text-gray-700 uppercase mb-1 tracking-tighter">Termo de Responsabilidade:</h3>
+                <h3 class="text-[10px] font-bold text-gray-700 uppercase mb-1">Termo de Responsabilidade:</h3>
                 <div class="h-20 overflow-y-auto text-[10px] text-gray-500 mb-2 p-2 bg-white border rounded leading-tight">
-                    1. Os armários são rotativos e de uso temporário durante as atividades acadêmicas.<br>
-                    2. A <b>Estácio Unimeta NÃO se responsabiliza</b> por sumiço, furto ou danos a materiais guardados.<br>
-                    3. A devolução da chave deve ser <b>imediata</b> após o último uso do semestre letivo.
+                    1. Os armários são rotativos e de uso temporário.<br>
+                    2. A <b>Estácio Unimeta NÃO se responsabiliza</b> por sumiço ou danos a materiais.<br>
+                    3. A devolução da chave deve ser <b>imediata</b> após o último uso do semestre.
                 </div>
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="aceiteTermo" class="w-4 h-4 text-blue-600 rounded">
+                    <input type="checkbox" id="aceiteTermo" class="w-4 h-4 text-blue-600">
                     <span class="text-[11px] font-semibold text-gray-700">Li e aceito os termos acima.</span>
                 </label>
             </div>
 
-            <button onclick="logar()" class="w-full bg-blue-700 text-white p-3 rounded-xl font-bold hover:bg-blue-800 transition shadow-md">ENTRAR</button>
+            <button onclick="logar()" class="w-full bg-blue-700 text-white p-3 rounded-xl font-bold hover:bg-blue-800 shadow-md transition">ENTRAR</button>
             <button onclick="cadastrar()" class="w-full border-2 border-blue-700 text-blue-700 p-3 rounded-xl font-bold hover:bg-blue-50 transition">CRIAR CONTA</button>
         </div>
         <p id="msg" class="mt-4 text-center text-xs font-bold"></p>
     </div>
-
-    <footer class="mt-8 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-        Desenvolvido por SerClin Tech
-    </footer>
+    <footer class="mt-8 text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Desenvolvido por SerClin Tech</footer>
 
     <script src="config.js"></script>
     <script>
@@ -59,17 +56,12 @@
             if (!email.includes('estacio.br')) return mostrarErro("Use e-mail @estacio.br");
             if (pass.length < 6) return mostrarErro("Senha mínima: 6 caracteres.");
 
-            auth.createUserWithEmailAndPassword(email, pass)
-                .then((userCredential) => {
-                    db.ref('usuarios_termos/' + userCredential.user.uid).set({
-                        email: email,
-                        aceite: true,
-                        dataHora: new Date().toLocaleString('pt-BR'),
-                        status: "Termo Assinado"
-                    });
-                    alert("Conta criada! Clique em entrar.");
-                })
-                .catch(e => mostrarErro("Erro: " + e.message));
+            auth.createUserWithEmailAndPassword(email, pass).then((user) => {
+                db.ref('usuarios_termos/' + user.user.uid).set({
+                    email: email, aceite: true, dataHora: new Date().toLocaleString('pt-BR'), status: "Termo Assinado"
+                });
+                alert("Conta criada! Clique em entrar.");
+            }).catch(e => mostrarErro("Erro: " + e.message));
         }
 
         function mostrarErro(txt) {
