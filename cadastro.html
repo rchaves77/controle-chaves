@@ -8,13 +8,16 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
-<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4">
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-8 border-blue-700">
-        <h2 class="text-2xl font-black text-blue-900 mb-6 uppercase text-center">Criar Conta</h2>
+        <h2 class="text-2xl font-black text-blue-900 mb-6 uppercase text-center tracking-tighter">Criar Conta</h2>
         
         <div class="space-y-4">
-            <input type="email" id="email" placeholder="nome@alunos.estacio.br" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-            <input type="password" id="pass" placeholder="Crie uma senha (mín. 6 dígitos)" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" id="nome" placeholder="Nome Completo" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 uppercase text-sm font-semibold">
+            
+            <input type="email" id="email" placeholder="cpf@alunos.estacio.br" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50">
+            
+            <input type="password" id="pass" placeholder="Crie uma senha (mín. 6 dígitos)" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50">
             
             <div class="bg-slate-50 p-4 rounded-lg border border-gray-200">
                 <h3 class="text-[10px] font-bold text-gray-700 uppercase mb-2">Termo de Responsabilidade:</h3>
@@ -29,8 +32,8 @@
                 </label>
             </div>
 
-            <button onclick="cadastrar()" class="w-full bg-blue-700 text-white p-3 rounded-xl font-bold hover:bg-blue-800 transition shadow-md">FINALIZAR CADASTRO</button>
-            <a href="index.html" class="block text-center text-xs text-gray-400 hover:underline">Voltar para Login</a>
+            <button onclick="cadastrar()" class="w-full bg-blue-700 text-white p-3 rounded-xl font-bold hover:bg-blue-800 transition shadow-md active:scale-95">FINALIZAR CADASTRO</button>
+            <a href="index.html" class="block text-center text-xs text-gray-400 hover:underline font-medium">Voltar para Login</a>
         </div>
         <p id="msg" class="mt-4 text-center text-xs font-bold"></p>
     </div>
@@ -39,23 +42,30 @@
     <script src="config.js"></script>
     <script>
         function cadastrar() {
+            const nome = document.getElementById('nome').value;
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
             const termo = document.getElementById('aceiteTermo').checked;
 
+            if (!nome) return mostrarErro("Por favor, digite seu nome completo.");
             if (!termo) return mostrarErro("Aceite os termos para continuar.");
             if (!email.includes('estacio.br')) return mostrarErro("Use seu e-mail da Estácio.");
             if (pass.length < 6) return mostrarErro("Senha muito curta.");
 
             auth.createUserWithEmailAndPassword(email, pass).then((u) => {
+                // SALVANDO O NOME REAL NO BANCO
                 db.ref('usuarios_termos/' + u.user.uid).set({
-                    email: email, aceite: true, data: new Date().toLocaleString('pt-BR')
+                    nome: nome,
+                    email: email,
+                    aceite: true,
+                    data: new Date().toLocaleString('pt-BR')
                 }).then(() => {
                     alert("Conta criada com sucesso!");
                     window.location.href = "index.html";
                 });
             }).catch(e => mostrarErro("Erro: " + e.message));
         }
+
         function mostrarErro(txt) {
             const msg = document.getElementById('msg');
             msg.innerText = txt;

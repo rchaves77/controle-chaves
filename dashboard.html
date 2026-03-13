@@ -12,11 +12,11 @@
 
     <div id="modalCobranca" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
-            <div class="bg-blue-900 p-4 flex justify-between items-center text-white">
-                <h2 class="font-bold uppercase text-sm italic">Fila de Cobrança Semestral</h2>
-                <button onclick="document.getElementById('modalCobranca').classList.add('hidden')" class="font-bold hover:text-red-400">X</button>
+            <div class="bg-blue-900 p-4 flex justify-between items-center text-white text-sm font-bold uppercase italic">
+                <span>Fila de Cobrança Semestral</span>
+                <button onclick="document.getElementById('modalCobranca').classList.add('hidden')" class="text-xl">&times;</button>
             </div>
-            <div id="listaDevedores" class="max-h-96 overflow-y-auto p-4 space-y-3 bg-slate-50 text-gray-700"></div>
+            <div id="listaDevedores" class="max-h-96 overflow-y-auto p-4 space-y-3 bg-slate-50"></div>
         </div>
     </div>
 
@@ -24,14 +24,16 @@
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <h2 class="font-bold text-sm uppercase italic tracking-tighter">Clínica Odonto Estácio</h2>
             <div class="flex gap-2">
-                <button id="btnAdmin" onclick="abrirModalCobranca()" class="hidden bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-[10px] font-bold uppercase shadow">Cobrança Semestre</button>
-                <button onclick="auth.signOut().then(()=>window.location.href='index.html')" class="bg-red-500 px-3 py-1 rounded text-[10px] font-bold uppercase shadow">Sair</button>
+                <button id="btnAdmin" onclick="abrirModalCobranca()" class="hidden bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-[10px] font-bold uppercase shadow transition-all italic">Cobrança Semestre</button>
+                <button onclick="auth.signOut().then(()=>window.location.href='index.html')" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-[10px] font-bold uppercase shadow transition-all">Sair</button>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-6xl mx-auto px-4 md:px-8 mt-6 w-full text-blue-900 font-medium text-sm">
-        <span id="boasVindas" class="border-l-4 border-blue-700 pl-3 italic italic">Verificando acesso...</span>
+    <div class="max-w-6xl mx-auto px-4 md:px-8 mt-6 w-full text-blue-900">
+        <div class="border-l-4 border-blue-700 pl-3">
+            <p id="boasVindas" class="font-medium text-sm italic">Verificando usuário...</p>
+        </div>
     </div>
 
     <main id="grades" class="max-w-6xl mx-auto p-4 md:p-8 grid gap-10 flex-grow w-full"></main>
@@ -47,15 +49,24 @@
                 window.location.href="index.html";
             } else {
                 const email = user.email.toLowerCase();
-                const nome = email.split('@')[0].toUpperCase();
-                document.getElementById('boasVindas').innerHTML = `Olá, <b>${nome}</b>.`;
+                const saudacao = document.getElementById('boasVindas');
 
-                // TRAVA DE SEGURANÇA: Só permite modificação se NÃO for @alunos nem @professores
-                // Aqui você pode colocar o seu e-mail específico para ser o único admin
+                // 1. Busca o NOME REAL no banco de dados de usuários
+                db.ref('usuarios_termos/' + user.uid).once('value', snap => {
+                    let nomeParaExibir = "";
+                    if (snap.exists() && snap.val().nome) {
+                        nomeParaExibir = snap.val().nome.toUpperCase();
+                    } else {
+                        // Se não tiver nome, usa a parte antes do @ do e-mail (CPF)
+                        nomeParaExibir = email.split('@')[0].toUpperCase();
+                    }
+                    saudacao.innerHTML = `Olá, <b>${nomeParaExibir}</b>. Bem-vindo ao sistema de chaves.`;
+                });
+
+                // 2. Trava de segurança para Alunos e Professores
                 if (!email.endsWith('@alunos.estacio.br') && !email.endsWith('@professores.estacio.br')) {
                     eAdmin = true;
                     document.getElementById('btnAdmin').classList.remove('hidden');
-                    document.getElementById('boasVindas').innerHTML += " <span class='text-[10px] text-blue-500'>(Modo Administrador)</span>";
                 }
                 carregarMapa();
             }
@@ -68,17 +79,14 @@
                 container.innerHTML = '';
                 ['C1', 'C2', 'C3'].forEach(bloco => {
                     let html = `<div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <h3 class="text-lg font-black text-blue-900 mb-6 border-b pb-2 text-center uppercase italic">Bloco ${bloco}</h3>
+                        <h3 class="text-lg font-black text-blue-900 mb-6 border-b pb-2 text-center uppercase italic font-serif">Bloco ${bloco}</h3>
                         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">`;
                     for(let i=1; i<=24; i++) {
                         const id = `${bloco}-${i}`;
                         const ocupado = dados[id];
-                        const cor = ocupado ? 'bg-red-500 ring-2 ring-red-100' : 'bg-green-500 hover:bg-green-600';
-                        
-                        // Se não for admin, remove o cursor de clique e a função de gerenciar
+                        const cor = ocupado ? 'bg-red-500 ring-2 ring-red-100 shadow-inner' : 'bg-green-500 hover:bg-green-600';
                         const cursor = eAdmin ? 'cursor-pointer hover:scale-105' : 'cursor-default opacity-90';
                         const clickFunc = eAdmin ? `onclick="gerenciar('${id}', ${JSON.stringify(ocupado)})"` : '';
-
                         html += `<div ${clickFunc} class="${cor} ${cursor} p-3 text-white rounded-lg text-sm font-black transition-all text-center shadow-sm">${i}</div>`;
                     }
                     container.innerHTML += html + `</div></div>`;
@@ -87,13 +95,12 @@
         }
 
         function gerenciar(id, ocupado) {
-            if(!eAdmin) return; // Proteção extra no código
-
+            if(!eAdmin) return;
             if(ocupado) {
                 if(confirm(`Devolver chave ${id} de ${ocupado.nome}?`)) db.ref('armarios/'+id).remove();
             } else {
-                const n = prompt("Nome Aluno:");
-                let w = prompt("Whats (DDD):");
+                const n = prompt("Nome completo do Aluno:");
+                let w = prompt("WhatsApp (com DDD):");
                 if(n && w) {
                     w = w.replace(/\D/g, '');
                     if (w.length <= 11) w = '55' + w;
@@ -106,15 +113,15 @@
             if(!eAdmin) return;
             db.ref('armarios').once('value', snap => {
                 const pendentes = snap.val();
-                if(!pendentes) return alert("Vazio.");
+                if(!pendentes) return alert("Nenhuma chave ocupada.");
                 const lista = document.getElementById('listaDevedores');
                 lista.innerHTML = '';
                 Object.entries(pendentes).forEach(([id, info]) => {
                     const div = document.createElement('div');
-                    div.className = "flex justify-between items-center p-3 bg-white border rounded-xl mb-2";
-                    div.innerHTML = `<div class="text-[10px] font-bold">${id} - ${info.nome}</div>
-                        <button onclick="window.open('https://api.whatsapp.com/send?phone=${info.whats}&text=Ola ${info.nome}, clínica Estácio. Favor devolver a chave ${id}.', '_blank'); this.innerText='OK'; this.className='bg-gray-200 px-2 py-1 rounded text-[8px]';" 
-                        class="bg-green-500 text-white px-2 py-1 rounded text-[8px] font-bold">COBRAR</button>`;
+                    div.className = "flex justify-between items-center p-3 bg-white border rounded-xl mb-2 shadow-sm";
+                    div.innerHTML = `<div class="text-[10px] font-bold text-blue-900 uppercase">#${id} - ${info.nome}</div>
+                        <button onclick="window.open('https://api.whatsapp.com/send?phone=${info.whats}&text=Ola ${info.nome}, clínica Estácio. Favor devolver a chave ${id}.', '_blank'); this.innerText='OK ✓'; this.className='bg-gray-200 px-3 py-1 rounded text-[8px] font-bold text-gray-400';" 
+                        class="bg-green-500 text-white px-3 py-1 rounded-full text-[8px] font-bold shadow-sm hover:bg-green-600 transition-colors uppercase">Cobrar</button>`;
                     lista.appendChild(div);
                 });
                 document.getElementById('modalCobranca').classList.remove('hidden');
