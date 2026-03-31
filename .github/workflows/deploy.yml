@@ -1,19 +1,26 @@
-- name: Criar arquivo env.js dinamicamente
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write  # ESSA LINHA RESOLVE O ERRO 128 (Dá permissão de escrita)
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v4 # Atualizado para v4
+
+      - name: Criar arquivo env.js dinamicamente
         run: |
-          echo "const firebaseConfig = {
-            apiKey: 'AIzaSyCTXsWaCrdgo4hNNDhTgRv-YYS0-S37FOc-AIzaSyCHWA0qu9eMS8Pu-u9Ioo3SKVB9Fn8aDfk',
-            authDomain: 'chaves-estacio.firebaseapp.com',
-            databaseURL: 'https://chaves-estacio-default-rtdb.firebaseio.com',
-            projectId: 'chaves-estacio',
-            storageBucket: 'chaves-estacio.firebasestorage.app',
-            messagingSenderId: '1052463955885',
-            appId: '1:1052463955885:web:32abff964d95be9f95ab24',
-            measurementId: 'G-CESXMKVRE0'
-          };" > env.js
+          echo "${{ secrets.FIREBASE_CONFIG }}" > env.js
 
       - name: Deploy para GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: . 
           branch: gh-pages
-          clean: true # Adicione esta linha para limpar versões antigas
