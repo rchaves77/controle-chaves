@@ -15,12 +15,14 @@ jobs:
       - name: Checkout 
         uses: actions/checkout@v4
 
-      - name: Criar arquivo env.js dinamicamente
+      - name: Criar arquivo env.js preservando formatação
         run: |
-          echo "${{ secrets.FIREBASE_CONFIG }}" > env.js
+          cat << 'EOF' > env.js
+          ${{ secrets.FIREBASE_CONFIG }}
+          EOF
 
       - name: Liberar o arquivo para o Deploy
-        run: rm -f .gitignore # Essa linha mágica remove a restrição apenas na hora de publicar!
+        run: rm -f .gitignore || true
 
       - name: Deploy para GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
