@@ -8,7 +8,22 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-50 min-h-screen flex flex-col font-sans relative">
+
+    <div id="modalPerfilAdmin" class="hidden fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xs w-full shadow-2xl overflow-hidden border-4 border-white relative text-center">
+            <button onclick="document.getElementById('modalPerfilAdmin').classList.add('hidden')" class="absolute top-2 right-4 text-2xl font-bold text-gray-400 hover:text-red-500">&times;</button>
+            <img id="fotoPerfilAdmin" class="w-full h-72 object-cover bg-slate-200" src="">
+            <div class="p-6 bg-slate-50">
+                <h3 id="nomePerfilAdmin" class="text-sm font-black text-blue-900 uppercase italic">Nome do Aluno</h3>
+                <p id="detalheArmarioAdmin" class="text-[10px] text-gray-500 font-bold mt-1 uppercase">ARMÁRIO #00</p>
+                <div class="flex gap-2 pt-4">
+                    <button id="btnZapPerfil" class="flex-1 bg-green-500 text-white p-3 rounded-xl font-bold text-[10px] uppercase shadow-md hover:bg-green-600 transition-all">WhatsApp</button>
+                    <button id="btnExcluirPerfil" class="flex-1 bg-red-500 text-white p-3 rounded-xl font-bold text-[10px] uppercase shadow-md hover:bg-red-600 transition-all">Liberar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="modalReserva" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden border-t-8 border-blue-900">
@@ -68,7 +83,6 @@
         let armarioSelecionado = null;
         let usuarioLogado = null;
 
-        // Máscara de WhatsApp automática
         document.getElementById('whatsReserva').addEventListener('input', e => {
             let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,1})(\d{0,4})(\d{0,4})/);
             e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? ' ' + x[3] : '') + (x[4] ? '-' + x[4] : '');
@@ -82,7 +96,6 @@
                     const dados = snap.val() || {};
                     const nome = dados.nome || user.email.split('@')[0];
                     document.getElementById('boasVindas').innerHTML = `Olá, <b>${nome.toUpperCase()}</b>. Selecione um armário livre.`;
-                    // Preenche o nome no modal automaticamente se já tiver no cadastro
                     if(dados.nome) document.getElementById('nomeReserva').value = dados.nome;
                 });
 
@@ -114,33 +127,39 @@
             });
         }
 
-        function acaoArmario(id, ocupado) {
-    if (ocupado) {
-        // Se estiver ocupado e você for ADMIN, ele pergunta se deseja excluir/devolver
-        if (eAdmin) {
-            const confirmarExclusao = confirm(`ADMINISTRADOR: Deseja excluir a reserva do armário ${id}?\n\nAluno: ${ocupado.nome}\nEsta ação liberará o armário imediatamente.`);
-            
-            if (confirmarExclusao) {
-                // Remove o registro do armário específico no Firebase
-                db.ref('armarios/' + id).remove()
-                    .then(() => {
-                        alert(`Armário ${id} foi liberado com sucesso.`);
-                    })
-                    .catch((error) => {
-                        alert("Erro ao excluir: " + error.message);
-                    });
+        async function acaoArmario(id, ocupado) {
+            if (ocupado) {
+                if (eAdmin) {
+                    if (ocupado.uid) {
+                        db.ref('usuarios_termos/' + ocupado.uid).once('value', snap => {
+                            const usuario = snap.val();
+                            const modal = document.getElementById('modalPerfilAdmin');
+                            document.getElementById('fotoPerfilAdmin').src = usuario?.foto || 'https://via.placeholder.com/300?text=SEM+FOTO';
+                            document.getElementById('nomePerfilAdmin').innerText = ocupado.nome;
+                            document.getElementById('detalheArmarioAdmin').innerText = `ARMÁRIO ${id} | RESERVA: ${ocupado.data}`;
+                            document.getElementById('btnZapPerfil').onclick = () => window.open(`https://api.whatsapp.com/send?phone=${ocupado.whats}&text=Olá ${ocupado.nome}, clínica Estácio. Favor devolver a chave ${id}.`, '_blank');
+                            document.getElementById('btnExcluirPerfil').onclick = () => {
+                                if(confirm(`Confirmar liberação do armário ${id}?`)) {
+                                    db.ref('armarios/' + id).remove().then(() => {
+                                        modal.classList.add('hidden');
+                                        alert("Armário liberado!");
+                                    });
+                                }
+                            };
+                            modal.classList.remove('hidden');
+                        });
+                    } else {
+                        if (confirm(`Armário ${id} ocupado por ${ocupado.nome}.\nDeseja liberar este armário?`)) db.ref('armarios/' + id).remove();
+                    }
+                } else {
+                    alert(`O armário ${id} já está ocupado por ${ocupado.nome}.`);
+                }
+            } else {
+                armarioSelecionado = id;
+                document.getElementById('tituloReserva').innerText = `Reservar #${id}`;
+                document.getElementById('modalReserva').classList.remove('hidden');
             }
-        } else {
-            // Se for aluno, apenas avisa que está ocupado
-            alert(`O armário ${id} já está ocupado por ${ocupado.nome}.`);
         }
-    } else {
-        // Se estiver livre, abre o processo de reserva que já tínhamos
-        armarioSelecionado = id;
-        document.getElementById('tituloReserva').innerText = `Reservar #${id}`;
-        document.getElementById('modalReserva').classList.remove('hidden');
-    }
-}
 
         function fecharModal() {
             document.getElementById('modalReserva').classList.add('hidden');
@@ -150,11 +169,8 @@
         function confirmarReserva() {
             const nome = document.getElementById('nomeReserva').value;
             let whats = document.getElementById('whatsReserva').value;
-            
             if(!nome || whats.length < 14) return alert("Preencha nome e WhatsApp corretamente.");
-
             const whatsLimpo = '55' + whats.replace(/\D/g, '');
-            
             db.ref('armarios/' + armarioSelecionado).set({
                 nome: nome.toUpperCase(),
                 whats: whatsLimpo,
