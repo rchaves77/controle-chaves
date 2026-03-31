@@ -9,6 +9,9 @@ const firebaseConfig = {
     measurementId: "G-CESXMKVRE0"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 const auth = firebase.auth();
-const db = firebase.database();
+const db = firebase.database(); // Linha que estava dando erro
+const storage = firebase.storage();
