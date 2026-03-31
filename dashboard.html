@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Mapa de Chaves - Estácio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
-<script src="env.js"></script>
-
-<script src="config.js"></script>
+    <script src="env.js"></script>
+    <script src="config.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans relative">
 
@@ -65,8 +66,8 @@
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <h2 class="font-bold text-sm uppercase italic tracking-tighter">Clínica Odonto Estácio</h2>
             <div class="flex gap-2">
-                <button id="btnAdmin" onclick="abrirModalCobranca()" class="hidden bg-green-500 px-3 py-1 rounded text-[10px] font-bold uppercase shadow italic">Cobrança</button>
-                <button onclick="auth.signOut().then(()=>window.location.href='index.html')" class="bg-red-500 px-3 py-1 rounded text-[10px] font-bold uppercase shadow">Sair</button>
+                <button id="btnAdmin" onclick="abrirModalCobranca()" class="hidden bg-green-500 px-3 py-1 rounded text-[10px] font-bold uppercase shadow italic text-white">Cobrança</button>
+                <button onclick="auth.signOut().then(()=>window.location.href='index.html')" class="bg-red-500 px-3 py-1 rounded text-[10px] font-bold uppercase shadow text-white">Sair</button>
             </div>
         </div>
     </nav>
@@ -81,7 +82,6 @@
 
     <footer class="p-6 text-center text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Desenvolvido por SerClin Tech</footer>
 
-    <script src="config.js"></script>
     <script>
         let eAdmin = false;
         let armarioSelecionado = null;
@@ -190,7 +190,7 @@
             db.ref('armarios').once('value', snap => {
                 const pendentes = snap.val();
                 if(!pendentes) return alert("Vazio.");
-                const lista = document.getElementById('listaDe devedores');
+                const lista = document.getElementById('listaDevedores'); // Corrigido o ID que tinha um espaço
                 lista.innerHTML = '';
                 Object.entries(pendentes).forEach(([id, info]) => {
                     const div = document.createElement('div');

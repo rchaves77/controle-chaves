@@ -6,13 +6,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
-<script src="env.js"></script>
-
-<script src="config.js"></script>
+    <script src="env.js"></script>
+    <script src="config.js"></script>
 </head>
 <body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-700">
@@ -35,7 +34,6 @@
     
     <footer class="mt-8 text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Desenvolvido por SerClin Tech</footer>
 
-    <script src="config.js"></script>
     <script>
         function logar() {
             const email = document.getElementById('email').value;
@@ -47,6 +45,7 @@
             btn.innerText = "CARREGANDO...";
             btn.disabled = true;
 
+            // O 'auth' agora virá corretamente do config.js carregado no head
             auth.signInWithEmailAndPassword(email, pass)
                 .then(() => {
                     window.location.href = "dashboard.html";
@@ -55,7 +54,6 @@
                     console.error(error);
                     btn.innerText = "ENTRAR";
                     btn.disabled = false;
-                    // Se o erro for a API desativada, avisamos aqui
                     if (error.code === "auth/operation-not-allowed") {
                         mostrarErro("Erro técnico: Ative a API no console do Google.");
                     } else {
