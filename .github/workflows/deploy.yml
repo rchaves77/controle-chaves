@@ -1,0 +1,23 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Ou o nome da sua ramificação principal
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v3
+
+      - name: Criar arquivo env.js dinamicamente
+        run: |
+          echo "${{ secrets.FIREBASE_CONFIG }}" > env.js
+
+      - name: Deploy para GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: . # Pasta onde estão seus arquivos (index, env.js, config.js)
+          branch: gh-pages # O GitHub Pages lerá desta branch automática
