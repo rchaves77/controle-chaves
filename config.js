@@ -1,9 +1,10 @@
-// config.js - Lógica de inicialização do Firebase
+// config.js - Inicialização e Escopo Global
+
 if (!firebase.apps.length) {
-    // A variável firebaseConfig deve ser carregada via env.js no HTML
     firebase.initializeApp(firebaseConfig);
 }
 
-const auth = firebase.auth();
-const db = firebase.database();
-const storage = firebase.storage(); // Essencial para a gestão de fotos dos alunos
+// O uso do 'window.' garante que o HTML inteiro consiga enxergar essas funções
+window.auth = firebase.auth();
+window.db = firebase.database();
+window.storage = firebase.storage();
