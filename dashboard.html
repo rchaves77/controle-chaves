@@ -115,19 +115,32 @@
         }
 
         function acaoArmario(id, ocupado) {
-            if (ocupado) {
-                if (eAdmin) {
-                    if (confirm(`ADMIN: Devolver chave ${id} de ${ocupado.nome}?`)) db.ref('armarios/'+id).remove();
-                } else {
-                    alert(`Armário ${id} já está ocupado por ${ocupado.nome}.`);
-                }
-            } else {
-                // Aluno ou Admin clicando em armário livre
-                armarioSelecionado = id;
-                document.getElementById('tituloReserva').innerText = `Reservar #${id}`;
-                document.getElementById('modalReserva').classList.remove('hidden');
+    if (ocupado) {
+        // Se estiver ocupado e você for ADMIN, ele pergunta se deseja excluir/devolver
+        if (eAdmin) {
+            const confirmarExclusao = confirm(`ADMINISTRADOR: Deseja excluir a reserva do armário ${id}?\n\nAluno: ${ocupado.nome}\nEsta ação liberará o armário imediatamente.`);
+            
+            if (confirmarExclusao) {
+                // Remove o registro do armário específico no Firebase
+                db.ref('armarios/' + id).remove()
+                    .then(() => {
+                        alert(`Armário ${id} foi liberado com sucesso.`);
+                    })
+                    .catch((error) => {
+                        alert("Erro ao excluir: " + error.message);
+                    });
             }
+        } else {
+            // Se for aluno, apenas avisa que está ocupado
+            alert(`O armário ${id} já está ocupado por ${ocupado.nome}.`);
         }
+    } else {
+        // Se estiver livre, abre o processo de reserva que já tínhamos
+        armarioSelecionado = id;
+        document.getElementById('tituloReserva').innerText = `Reservar #${id}`;
+        document.getElementById('modalReserva').classList.remove('hidden');
+    }
+}
 
         function fecharModal() {
             document.getElementById('modalReserva').classList.add('hidden');
