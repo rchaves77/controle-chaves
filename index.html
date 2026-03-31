@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Clínica Estácio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+<script src="env.js"></script>
+
+<script src="config.js"></script>
+</head>
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-700">
+        <h1 class="text-3xl font-extrabold text-blue-900 text-center mb-2 uppercase tracking-tighter italic">Estácio</h1>
+        <p class="text-gray-500 text-center mb-8 font-medium text-[10px] tracking-widest uppercase">Controle de Chaves Odonto</p>
+        
+        <div class="space-y-4">
+            <input type="email" id="email" placeholder="E-mail Institucional" class="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-slate-50 text-sm">
+            <input type="password" id="pass" placeholder="Sua senha" class="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-slate-50 text-sm">
+            
+            <button id="btnEntrar" onclick="logar()" class="w-full bg-blue-700 text-white p-4 rounded-xl font-bold hover:bg-blue-800 shadow-lg transition-all active:scale-95 uppercase text-xs">ENTRAR</button>
+            
+            <div class="pt-4 border-t border-gray-100 text-center">
+                <p class="text-gray-500 text-[10px] uppercase font-bold mb-2">Ainda não tem conta?</p>
+                <button onclick="window.location.href='cadastro.html'" class="w-full border-2 border-blue-700 text-blue-700 p-3 rounded-xl font-bold hover:bg-blue-50 transition-all text-xs uppercase">CRIAR CONTA</button>
+            </div>
+        </div>
+        <p id="msg" class="mt-4 text-center text-xs font-bold"></p>
+    </div>
+    
+    <footer class="mt-8 text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Desenvolvido por SerClin Tech</footer>
+
+    <script src="config.js"></script>
+    <script>
+        function logar() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            const btn = document.getElementById('btnEntrar');
+            
+            if(!email || !pass) return mostrarErro("Preencha todos os campos.");
+
+            btn.innerText = "CARREGANDO...";
+            btn.disabled = true;
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => {
+                    window.location.href = "dashboard.html";
+                })
+                .catch((error) => {
+                    console.error(error);
+                    btn.innerText = "ENTRAR";
+                    btn.disabled = false;
+                    // Se o erro for a API desativada, avisamos aqui
+                    if (error.code === "auth/operation-not-allowed") {
+                        mostrarErro("Erro técnico: Ative a API no console do Google.");
+                    } else {
+                        mostrarErro("E-mail ou senha incorretos.");
+                    }
+                });
+        }
+
+        function mostrarErro(txt) {
+            const msg = document.getElementById('msg');
+            msg.innerText = txt;
+            msg.className = "mt-4 text-center text-xs font-bold text-red-600 bg-red-50 p-2 rounded border border-red-100 animate-pulse uppercase";
+        }
+    </script>
+</body>
+</html>
