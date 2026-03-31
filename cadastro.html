@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>Cadastro - Estácio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
-<script src="env.js"></script>
-
-<script src="config.js"></script>
+    <script src="env.js"></script>
+    <script src="config.js"></script>
 </head>
 <body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-8 border-blue-700">
-        <h2 class="text-2xl font-black text-blue-900 mb-6 uppercase text-center tracking-tighter">Criar Conta</h2>
+        <h2 class="text-2xl font-black text-blue-900 mb-6 uppercase text-center tracking-tighter italic">Criar Conta</h2>
         
         <div class="space-y-4">
             <input type="text" id="nome" placeholder="NOME COMPLETO" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 uppercase text-sm font-semibold">
@@ -27,33 +28,31 @@
                 </label>
             </div>
 
-            <input type="email" id="email" placeholder="cpf@alunos.estacio.br" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50">
+            <input type="email" id="email" placeholder="cpf@alunos.estacio.br" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-sm">
             
-            <input type="password" id="pass" placeholder="Crie uma senha (mín. 6 dígitos)" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50">
+            <input type="password" id="pass" placeholder="Crie uma senha (mín. 6 dígitos)" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-sm">
             
             <div class="bg-slate-50 p-4 rounded-lg border border-gray-200">
                 <h3 class="text-[10px] font-bold text-gray-700 uppercase mb-2 italic">Termo de Responsabilidade:</h3>
-                <div class="h-32 overflow-y-auto text-xs text-gray-500 p-2 bg-white border rounded leading-relaxed">
+                <div class="h-32 overflow-y-auto text-[10px] text-gray-500 p-2 bg-white border rounded leading-relaxed">
                     1. Os armários são rotativos e temporários.<br>
                     2. A <b>Estácio Unimeta NÃO se responsabiliza</b> por materiais guardados.<br>
                     3. A devolução da chave deve ser <b>imediata</b> após o último uso do semestre.
                 </div>
                 <label class="flex items-center gap-2 mt-3 cursor-pointer">
                     <input type="checkbox" id="aceiteTermo" class="w-4 h-4 text-blue-600">
-                    <span class="text-xs font-bold text-gray-700">Li e aceito os termos.</span>
+                    <span class="text-[10px] font-bold text-gray-700 uppercase">Li e aceito os termos.</span>
                 </label>
             </div>
 
-            <button id="btnCadastrar" onclick="cadastrar()" class="w-full bg-blue-700 text-white p-3 rounded-xl font-bold hover:bg-blue-800 transition shadow-md active:scale-95 disabled:opacity-50">FINALIZAR CADASTRO</button>
-            <a href="index.html" class="block text-center text-xs text-gray-400 hover:underline font-medium">Voltar para Login</a>
+            <button id="btnCadastrar" onclick="cadastrar()" class="w-full bg-blue-700 text-white p-3 rounded-xl font-bold hover:bg-blue-800 transition shadow-md active:scale-95 disabled:opacity-50 text-xs uppercase">FINALIZAR CADASTRO</button>
+            <a href="index.html" class="block text-center text-[10px] text-gray-400 hover:underline font-bold uppercase tracking-wider">Voltar para Login</a>
         </div>
-        <p id="msg" class="mt-4 text-center text-xs font-bold"></p>
+        <p id="msg" class="mt-4 text-center text-[10px] font-bold uppercase tracking-tight"></p>
     </div>
     <footer class="mt-8 text-center text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">Desenvolvido por SerClin Tech</footer>
 
-    <script src="config.js"></script>
     <script>
-        // Função para mostrar a foto antes de enviar
         function previewFoto(input) {
             const preview = document.getElementById('imgPreview');
             if (input.files && input.files[0]) {
@@ -77,11 +76,10 @@
             if (!nome) return mostrarErro("Digite seu nome completo.");
             if (!fotoFile) return mostrarErro("É obrigatório tirar uma foto para o cadastro.");
             if (!termo) return mostrarErro("Aceite os termos.");
-            if (!email.includes('estacio.br')) return mostrarErro("Use seu e-mail @estacio.br");
+            if (!email.includes('estacio.br')) return mostrarErro("Use seu e-mail @estacio.br ou @professores.estacio.br");
             if (pass.length < 6) return mostrarErro("Senha mínima: 6 dígitos.");
 
-            // Bloqueia o botão durante o processo
-            btn.innerText = "Processando...";
+            btn.innerText = "PROCESSANDO...";
             btn.disabled = true;
 
             try {
@@ -89,8 +87,8 @@
                 const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
                 const uid = userCredential.user.uid;
 
-                // 2. Upload da Foto para o Storage
-                const storageRef = firebase.storage().ref('fotos_usuarios/' + uid);
+                // 2. Upload da Foto para o Storage (Usando a instância global storage do config.js)
+                const storageRef = storage.ref('fotos_usuarios/' + uid);
                 await storageRef.put(fotoFile);
                 const fotoUrl = await storageRef.getDownloadURL();
 
@@ -107,7 +105,8 @@
                 window.location.href = "index.html";
 
             } catch (error) {
-                mostrarErro("Erro: " + error.message);
+                console.error(error);
+                mostrarErro("ERRO: " + error.message);
                 btn.innerText = "FINALIZAR CADASTRO";
                 btn.disabled = false;
             }
@@ -116,7 +115,7 @@
         function mostrarErro(txt) {
             const msg = document.getElementById('msg');
             msg.innerText = txt;
-            msg.className = "mt-4 text-center text-xs font-bold text-red-600 bg-red-50 p-2 rounded border border-red-100";
+            msg.className = "mt-4 text-center text-[10px] font-bold text-red-600 bg-red-50 p-2 rounded border border-red-100 animate-pulse uppercase";
         }
     </script>
 </body>
