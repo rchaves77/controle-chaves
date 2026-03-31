@@ -1,5 +1,5 @@
 const firebaseConfig = {
-    apiKey: "AIzaSyCYFKI7w7Lhe4ljvrO13s7e8cERMsBVr2Q",
+    apiKey: "AIzaSyAztds4noCmJbLu-OkqtQFGhhtpSa0p92I",
     authDomain: "chaves-estacio.firebaseapp.com",
     databaseURL: "https://chaves-estacio-default-rtdb.firebaseio.com",
     projectId: "chaves-estacio",
