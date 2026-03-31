@@ -3,14 +3,17 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main  # Ou o nome da sua ramificação principal
+      - main
+
+permissions:
+  contents: write  # ESSA LINHA RESOLVE O ERRO 128 (Dá permissão de escrita)
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Atualizado para v4
 
       - name: Criar arquivo env.js dinamicamente
         run: |
@@ -19,5 +22,5 @@ jobs:
       - name: Deploy para GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: . # Pasta onde estão seus arquivos (index, env.js, config.js)
-          branch: gh-pages # O GitHub Pages lerá desta branch automática
+          folder: . 
+          branch: gh-pages
