@@ -10,8 +10,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
-    <script src="env.js"></script>
-    <script src="config.js"></script>
+    <script src="./env.js"></script>
+    <script src="./config.js"></script>
 </head>
 <body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-8 border-blue-700">
@@ -66,6 +66,11 @@
         }
 
         async function cadastrar() {
+            // Verificação de segurança: checa se as variáveis do config.js estão prontas
+            if (typeof auth === 'undefined' || typeof db === 'undefined') {
+                return mostrarErro("Erro de conexão. Aguarde um momento e tente novamente.");
+            }
+
             const btn = document.getElementById('btnCadastrar');
             const nome = document.getElementById('nome').value;
             const email = document.getElementById('email').value;
@@ -76,7 +81,7 @@
             if (!nome) return mostrarErro("Digite seu nome completo.");
             if (!fotoFile) return mostrarErro("É obrigatório tirar uma foto para o cadastro.");
             if (!termo) return mostrarErro("Aceite os termos.");
-            if (!email.includes('estacio.br')) return mostrarErro("Use seu e-mail @estacio.br ou @professores.estacio.br");
+            if (!email.includes('estacio.br')) return mostrarErro("Use seu e-mail @estacio.br");
             if (pass.length < 6) return mostrarErro("Senha mínima: 6 dígitos.");
 
             btn.innerText = "PROCESSANDO...";
@@ -87,12 +92,12 @@
                 const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
                 const uid = userCredential.user.uid;
 
-                // 2. Upload da Foto para o Storage (Usando a instância global storage do config.js)
+                // 2. Upload da Foto para o Storage
                 const storageRef = storage.ref('fotos_usuarios/' + uid);
                 await storageRef.put(fotoFile);
                 const fotoUrl = await storageRef.getDownloadURL();
 
-                // 3. Salvar dados no Database (incluindo URL da foto)
+                // 3. Salvar dados no Database
                 await db.ref('usuarios_termos/' + uid).set({
                     nome: nome.toUpperCase(),
                     email: email,

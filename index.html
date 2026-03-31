@@ -10,8 +10,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
-    <script src="env.js"></script>
-    <script src="config.js"></script>
+    <script src="./env.js"></script>
+    <script src="./config.js"></script>
 </head>
 <body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-700">
@@ -36,6 +36,11 @@
 
     <script>
         function logar() {
+            // Verifica se o config.js já carregou o 'auth'
+            if (typeof auth === 'undefined') {
+                return mostrarErro("Carregando sistema... tente novamente em 2 segundos.");
+            }
+
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
             const btn = document.getElementById('btnEntrar');
@@ -45,7 +50,6 @@
             btn.innerText = "CARREGANDO...";
             btn.disabled = true;
 
-            // O 'auth' agora virá corretamente do config.js carregado no head
             auth.signInWithEmailAndPassword(email, pass)
                 .then(() => {
                     window.location.href = "dashboard.html";
@@ -54,10 +58,13 @@
                     console.error(error);
                     btn.innerText = "ENTRAR";
                     btn.disabled = false;
+                    
                     if (error.code === "auth/operation-not-allowed") {
                         mostrarErro("Erro técnico: Ative a API no console do Google.");
-                    } else {
+                    } else if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
                         mostrarErro("E-mail ou senha incorretos.");
+                    } else {
+                        mostrarErro("Erro ao logar. Tente novamente.");
                     }
                 });
         }
