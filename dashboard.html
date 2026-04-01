@@ -107,10 +107,11 @@
                         if(dados.nome) document.getElementById('nomeReserva').value = dados.nome;
                     });
 
-                    if (!user.email.endsWith('@alunos.estacio.br') && !user.email.endsWith('@professores.estacio.br')) {
-                        eAdmin = true;
-                        document.getElementById('btnAdmin').classList.remove('hidden');
-                    }
+                    // Agora, se NÃO for aluno, automaticamente é Admin (SerClin e Professores)
+            if (!user.email.endsWith('@alunos.estacio.br')) {
+    eAdmin = true;
+    document.getElementById('btnAdmin').classList.remove('hidden');
+}
                     carregarMapa();
                 }
             });
@@ -146,19 +147,34 @@
                             document.getElementById('fotoPerfilAdmin').src = usuario?.foto || 'https://via.placeholder.com/300?text=SEM+FOTO';
                             document.getElementById('nomePerfilAdmin').innerText = ocupado.nome;
                             document.getElementById('detalheArmarioAdmin').innerText = `ARMÁRIO ${id} | RESERVA: ${ocupado.data}`;
-                            document.getElementById('btnZapPerfil').onclick = () => window.open(`https://api.whatsapp.com/send?phone=${ocupado.whats}&text=Olá ${ocupado.nome}, clínica Estácio. Favor devolver a chave ${id}.`, '_blank');
+                            
+                            // 1. CORREÇÃO DA URL: Evita o erro 'chrome-error' convertendo espaços em %20
+                            const mensagemZap = encodeURIComponent(`Olá ${ocupado.nome}, clínica Estácio. Favor devolver a chave ${id}.`);
+                            document.getElementById('btnZapPerfil').onclick = () => window.open(`https://api.whatsapp.com/send?phone=${ocupado.whats}&text=${mensagemZap}`, '_blank');
+                            
+                            // 2. CORREÇÃO DA EXCLUSÃO: Adicionado o .catch() para capturar erros reais
                             document.getElementById('btnExcluirPerfil').onclick = () => {
                                 if(confirm(`Confirmar liberação do armário ${id}?`)) {
-                                    db.ref('armarios/' + id).remove().then(() => {
-                                        modal.classList.add('hidden');
-                                        alert("Armário liberado!");
-                                    });
+                                    db.ref('armarios/' + id).remove()
+                                        .then(() => {
+                                            modal.classList.add('hidden');
+                                            alert("Armário liberado com sucesso!");
+                                        })
+                                        .catch((erro) => {
+                                            console.error("Falha técnica ao excluir:", erro);
+                                            alert("Erro ao remover no Firebase: " + erro.message);
+                                        });
                                 }
                             };
                             modal.classList.remove('hidden');
                         });
                     } else {
-                        if (confirm(`Armário ${id} ocupado por ${ocupado.nome}.\nDeseja liberar este armário?`)) db.ref('armarios/' + id).remove();
+                        // Tratamento para exclusão de armários antigos (sem UID gravado)
+                        if (confirm(`Armário ${id} ocupado por ${ocupado.nome}.\nDeseja liberar este armário?`)) {
+                            db.ref('armarios/' + id).remove()
+                                .then(() => alert("Armário liberado!"))
+                                .catch((erro) => alert("Erro ao liberar: " + erro.message));
+                        }
                     }
                 } else {
                     alert(`O armário ${id} já está ocupado por ${ocupado.nome}.`);
